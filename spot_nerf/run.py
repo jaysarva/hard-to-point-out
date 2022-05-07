@@ -28,8 +28,8 @@ import pyngp as ngp # noqa
 def parse_args():
 	parser = argparse.ArgumentParser(description="Run neural graphics primitives testbed with additional configuration & output options")
 
-	parser.add_argument("--scene", "--training_data", default="", help="The scene to load. Can be the scene's name or a full path to the training data.")
-	parser.add_argument("--mode", default="", const="nerf", nargs="?", choices=["nerf", "sdf", "image", "volume"], help="Mode can be 'nerf', 'sdf', or 'image' or 'volume'. Inferred from the scene if unspecified.")
+	parser.add_argument("--scene", "--training_data", default="./new_transforms.json", help="The scene to load. Can be the scene's name or a full path to the training data.")
+	parser.add_argument("--mode", default="nerf", const="nerf", nargs="?", choices=["nerf", "sdf", "image", "volume"], help="Mode can be 'nerf', 'sdf', or 'image' or 'volume'. Inferred from the scene if unspecified.")
 	parser.add_argument("--network", default="", help="Path to the network config. Uses the scene's default if unspecified.")
 
 	parser.add_argument("--load_snapshot", default="", help="Load this snapshot before training. recommended extension: .msgpack")
@@ -52,7 +52,7 @@ def parse_args():
 
 	parser.add_argument("--gui", action="store_true", help="Run the testbed GUI interactively.")
 	parser.add_argument("--train", action="store_true", help="If the GUI is enabled, controls whether training starts immediately.")
-	parser.add_argument("--n_steps", type=int, default=-1, help="Number of steps to train for before quitting.")
+	parser.add_argument("--n_steps", type=int, default=8000, help="Number of steps to train for before quitting.")
 
 	parser.add_argument("--sharpen", default=0, help="Set amount of sharpening applied to NeRF training images.")
 
@@ -60,7 +60,7 @@ def parse_args():
 	return args
 
 
-if __name__ == "__main__":
+def runnerf(gui):
 	args = parse_args()
 
 	if args.mode == "":
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 		with open(args.screenshot_transforms) as f:
 			ref_transforms = json.load(f)
 
-	if args.gui:
+	if gui:
 		# Pick a sensible GUI resolution depending on arguments.
 		sw = args.width or 1920
 		sh = args.height or 1080
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 			sh = int(sh / 2)
 		testbed.init_window(sw, sh)
 
-	testbed.shall_train = args.train if args.gui else True
+	testbed.shall_train = args.train if gui else True
 
 	testbed.nerf.render_with_camera_distortion = True
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 					repl(testbed)
 				# What will happen when training is done?
 				if testbed.training_step >= n_steps:
-					if args.gui:
+					if gui:
 						testbed.shall_train = False
 					else:
 						break

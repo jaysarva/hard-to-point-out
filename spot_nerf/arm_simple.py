@@ -27,6 +27,7 @@ from bosdyn.client.frame_helpers import ODOM_FRAME_NAME, VISION_FRAME_NAME, BODY
 from bosdyn.api.basic_command_pb2 import RobotCommandFeedbackStatus
 from bosdyn.client.image import ImageClient, build_image_request
 from bosdyn.api import image_pb2
+from bosdyn.api import gripper_camera_param_pb2
 
 def hello_arm(config):
     """A simple example of using the Boston Dynamics API to command Spot's arm."""
@@ -72,12 +73,16 @@ def hello_arm(config):
         blocking_stand(command_client, timeout_sec=10)
         robot.logger.info("Robot standing.")
         start_index = 0
-        #start_index = take_images(robot, robot_state_client, command_client, image_client, start_index)
-
+        #start taking images from the front
+        start_index = take_images(robot, robot_state_client, command_client, image_client, start_index)
+        #goto the back and take images
         walk_to_other_side(command_client, robot_state_client)
+        start_index = take_images(robot, robot_state_client, command_client, image_client, start_index)
+        #walk back to the front side
         walk_to_other_side(command_client, robot_state_client)
-        #walk_to_left_side(command_client, robot_state_client)
-        #start_index = take_images(robot, robot_state_client, command_client, image_client, start_index)
+        #walk to the left side and take images
+        walk_to_left_side(command_client, robot_state_client)
+        start_index = take_images(robot, robot_state_client, command_client, image_client, start_index)
 
         # Power the robot off. By specifying "cut_immediately=False", a safe power off command
         # is issued to the robot. This will attempt to sit the robot before powering off.
@@ -150,7 +155,7 @@ def walk_to_left_side(command_client, robot_state_client):
         # move the robot to the side
 
         # 1.1 is the body length.
-        distance_to_obj = 0.8
+        distance_to_obj = 0.85
         dx = (distance_to_obj * 2 + 1.1)/2
         dy = dx
 
@@ -268,8 +273,8 @@ def take_image(image_client, name):
         extension = ".jpg"
         img = np.frombuffer(image.shot.image.data, dtype=dtype)
         img = cv2.imdecode(img, -1)
-        image_saved_path = name
-        image_saved_path = image_saved_path.replace("/", '')
+        image_saved_path = "data/myimages/" + name
+        #image_saved_path = image_saved_path.replace("/", '')
         cv2.imwrite(image_saved_path + extension, img)
 
 def euler_to_quaternion(yaw, pitch, roll):
